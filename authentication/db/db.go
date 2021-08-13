@@ -12,6 +12,12 @@ import (
 type Connection interface {
 	Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc)
 	Connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, error)
+	DB() *mongo.Database
+}
+
+type conn struct {
+	session  *mongo.Session
+	database *mongo.Database
 }
 
 func Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
@@ -26,7 +32,7 @@ func Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
 }
 
 func Connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 
 	// test connection
@@ -37,4 +43,9 @@ func Connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, er
 		fmt.Printf("Connected successfully to: %s", uri)
 	}
 	return client, ctx, cancel, err
+}
+
+// parameter - return type
+func DB(conn *conn) *mongo.Database {
+	return conn.database
 }
