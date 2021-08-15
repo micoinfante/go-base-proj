@@ -11,13 +11,15 @@ import (
 
 type Connection interface {
 	Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc)
-	Connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, error)
-	DB() *mongo.Database
+	Connect(cfg Config) (*mongo.Client, context.Context, context.CancelFunc, error)
+	DBClient() *mongo.Database
 }
 
 type conn struct {
-	session  *mongo.Session
 	database *mongo.Database
+	Client *mongo.Client
+	Ctx    context.Context
+	Cancel context.CancelFunc
 }
 
 func Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
@@ -31,21 +33,21 @@ func Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
 	}()
 }
 
-func Connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, error) {
+func Connect(cfg Config) (*conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Dsn()))
 
 	// test connection
 
 	if err := client.Ping(context.Background(), readpref.Primary()); err != nil {
-		return client, ctx, cancel, err
+
 	} else {
-		fmt.Printf("Connected successfully to: %s", uri)
+		fmt.Printf("Connected successfully to: %s", cfg.Dsn())
 	}
-	return client, ctx, cancel, err
+
+	return &conn{Client: client, database: client.Database(cfg.DbName()), Ctx: ctx, Cancel: cancel}, nil
 }
 
-// parameter - return type
-func DB(conn *conn) *mongo.Database {
-	return conn.database
+func DB(c *conn) *mongo.Database {
+	return c.database
 }

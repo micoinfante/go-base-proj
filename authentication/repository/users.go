@@ -27,7 +27,7 @@ type usersRepository struct {
 }
 
 func NewUsersRepository(conn db.Connection) UsersRepository {
-	return &usersRepository{collection: conn.DB().Collection(UsersCollection)}
+	return &usersRepository{collection: conn.DBClient().Database().Collection(UsersCollection)}
 }
 
 func (r *usersRepository) Save(user *models.User) error {
