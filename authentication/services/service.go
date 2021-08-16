@@ -25,7 +25,8 @@ func (a authService) SignUp(ctx context.Context, user *pb.User) (*pb.User, error
 	if err != nil {
 		return nil, err
 	}
-
+	user.Name = strings.TrimSpace(user.Name)
+	user.Email = validators.FormatEmail(user.Email)
 	found, err := a.usersRepository.GetByEmail(user.Email)
 	if err == mongo.ErrNoDocuments {
 		_user := new(models.User)

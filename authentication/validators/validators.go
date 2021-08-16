@@ -4,6 +4,7 @@ import (
 	"authentication/pb"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"strings"
 )
 
 var (
@@ -34,4 +35,8 @@ func ValidateSignUp(user *pb.User) error {
 	}
 
 	return nil
+}
+
+func FormatEmail(email string) string {
+	return strings.TrimSpace(strings.ToLower(email))
 }
