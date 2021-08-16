@@ -24,10 +24,10 @@ func main() {
 		}
 	}
 	config := db.NewConfig()
-	client, ctx, cancel, err :=  db.Connect(config.Dsn())
+	conn, err := db.NewConnection(config)
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	defer db.Close(client, ctx, cancel)
+	defer conn.Close()
 }

@@ -10,30 +10,18 @@ import (
 )
 
 type Connection interface {
-	Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc)
-	Connect(cfg Config) (*mongo.Client, context.Context, context.CancelFunc, error)
-	DBClient() *mongo.Database
+	Close()
+	DB() *mongo.Database
 }
 
 type conn struct {
 	database *mongo.Database
-	Client *mongo.Client
-	Ctx    context.Context
-	Cancel context.CancelFunc
+	Client   *mongo.Client
+	Ctx      context.Context
+	Cancel   context.CancelFunc
 }
 
-func Close(c *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
-	//cancel context
-	defer cancel()
-
-	defer func() {
-		if err := c.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-}
-
-func Connect(cfg Config) (*conn, error) {
+func NewConnection(cfg Config) (Connection, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Dsn()))
 
@@ -48,6 +36,17 @@ func Connect(cfg Config) (*conn, error) {
 	return &conn{Client: client, database: client.Database(cfg.DbName()), Ctx: ctx, Cancel: cancel}, nil
 }
 
-func DB(c *conn) *mongo.Database {
-	return c.database
+func (conn *conn) DB() *mongo.Database {
+	return conn.database
+}
+
+func (conn *conn) Close() {
+	//cancel context
+	defer conn.Cancel()
+
+	defer func() {
+		if err := conn.Client.Disconnect(conn.Ctx); err != nil {
+			panic(err)
+		}
+	}()
 }
