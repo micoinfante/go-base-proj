@@ -6,7 +6,6 @@ import (
 	"authentication/repository"
 	"authentication/services"
 	"flag"
-	"fmt"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"log"
@@ -42,7 +41,7 @@ func main() {
 	usersRepository := repository.NewUsersRepository(conn)
 	authService := services.NewAuthService(usersRepository)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	listener, err := net.Listen("tcp", ":9001")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -50,7 +49,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	pb.RegisterAuthServiceServer(grpcServer, authService)
 
-	log.Printf("Authentication service running on [::]:%d\n", port)
+	log.Printf("\nauthentication service running on [::]:%d\n\n", port)
 
 	grpcServer.Serve(listener)
 }

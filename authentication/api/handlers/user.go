@@ -4,7 +4,6 @@ import (
 	"authentication/api/restutil"
 	"authentication/pb"
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"io/ioutil"
@@ -18,6 +17,7 @@ type AuthHandlers interface {
 	GetUser(w http.ResponseWriter, r *http.Request)
 	GetUsers(w http.ResponseWriter, r *http.Request)
 	DeleteUser(w http.ResponseWriter, r *http.Request)
+	SignIn(w http.ResponseWriter, r *http.Request)
 }
 
 type authHandler struct {
@@ -61,8 +61,14 @@ func (h *authHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *authHandler) PutUser(w http.ResponseWriter, r *http.Request) {
+	tokenPayload, err := restutil.AuthRequestWithId(r)
+	if err != nil {
+		restutil.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
 	if r.Body == nil {
 		restutil.WriteError(w, http.StatusBadRequest, restutil.ErrEmptyBody)
+		return
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -81,8 +87,7 @@ func (h *authHandler) PutUser(w http.ResponseWriter, r *http.Request) {
 		restutil.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
-	vars := mux.Vars(r)
-	user.Id = vars["id"]
+	user.Id = tokenPayload.UserId
 
 	response, err := h.authSvcClient.UpdateUser(r.Context(), user)
 	if err != nil {
@@ -93,8 +98,12 @@ func (h *authHandler) PutUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *authHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	response, err := h.authSvcClient.GetUser(r.Context(), &pb.GetUserRequest{Id: vars["id"]})
+	tokenPayload, err := restutil.AuthRequestWithId(r)
+	if err != nil {
+		restutil.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	response, err := h.authSvcClient.GetUser(r.Context(), &pb.GetUserRequest{Id: tokenPayload.UserId})
 	if err != nil {
 		restutil.WriteError(w, http.StatusBadGateway, err)
 		return
@@ -126,12 +135,45 @@ func (h *authHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *authHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	response, err := h.authSvcClient.DeleteUser(r.Context(), &pb.GetUserRequest{Id: vars["id"]})
+	tokenPayload, err := restutil.AuthRequestWithId(r)
+	if err != nil {
+		restutil.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	response, err := h.authSvcClient.DeleteUser(r.Context(), &pb.GetUserRequest{Id: tokenPayload.UserId})
 	if err != nil {
 		restutil.WriteError(w, http.StatusBadGateway, err)
 		return
 	}
 	w.Header().Set("Entity", response.Id)
 	restutil.WriteAsJson(w, http.StatusNoContent, nil)
+}
+
+func (h *authHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		restutil.WriteError(w, http.StatusBadRequest, restutil.ErrEmptyBody)
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(r.Body)
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		restutil.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	input := new(pb.SignInRequest)
+	err = json.Unmarshal(body, input)
+	if err != nil {
+		restutil.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	response, err := h.authSvcClient.SignIn(r.Context(), input)
+	if err != nil {
+		restutil.WriteError(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	restutil.WriteAsJson(w, http.StatusCreated, response)
 }

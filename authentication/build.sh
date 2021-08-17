@@ -2,5 +2,4 @@
 
 go clean --cache && go test -v -cover authentication/...
 go build -o authsvc main.go
-
-sudo chmod +x authsvc
+go build -o api/authsvc api/main.go

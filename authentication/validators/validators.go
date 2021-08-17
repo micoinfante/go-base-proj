@@ -13,6 +13,7 @@ var (
 	ErrEmptyPassword          = errors.New("password can't be empty")
 	ErrEmailAlreadyRegistered = errors.New("email already registered")
 	ErrInvalidUserId          = errors.New("invalid id")
+	ErrSignInFailed           = errors.New("sign in failed")
 )
 
 func ValidateSignUp(user *pb.User) error {

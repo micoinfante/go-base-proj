@@ -4,6 +4,7 @@ import (
 	"authentication/models"
 	"authentication/pb"
 	"authentication/repository"
+	"authentication/security"
 	"authentication/validators"
 	"context"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,6 +23,10 @@ func NewAuthService(usersRepository repository.UsersRepository) pb.AuthServiceSe
 
 func (a authService) SignUp(ctx context.Context, user *pb.User) (*pb.User, error) {
 	err := validators.ValidateSignUp(user)
+	if err != nil {
+		return nil, err
+	}
+	user.Password, err = security.EncryptPassword(user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -106,4 +111,26 @@ func (a authService) DeleteUser(ctx context.Context, request *pb.GetUserRequest)
 	}
 
 	return &pb.DeleteUserResponse{Id: request.Id}, nil
+}
+
+func (a authService) SignIn(ctx context.Context, request *pb.SignInRequest) (*pb.SignInResponse, error) {
+	request.Email = validators.FormatEmail(request.Email)
+	user, err := a.usersRepository.GetByEmail(request.Email)
+
+	if err != nil {
+		return nil, validators.ErrSignInFailed
+	}
+	err = security.VerifyPassword(user.Password, request.Password)
+	if err != nil {
+		return nil, validators.ErrSignInFailed
+	}
+
+	token, err := security.NewToken(user.Id.Hex())
+	if err != nil {
+		return nil, validators.ErrSignInFailed
+	}
+	return &pb.SignInResponse{
+		User:  user.ToProtoBuffer(),
+		Token: token,
+	}, nil
 }
