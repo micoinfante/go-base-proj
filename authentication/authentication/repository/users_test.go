@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"authentication/authentication/models"
 	"authentication/db"
-	"authentication/models"
 	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
