@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-type Config interface{
+type Config interface {
 	Dsn() string
 	DbName() string
 }
@@ -24,7 +24,7 @@ type config struct {
 func NewConfig() Config {
 	var cfg config
 	cfg.dbUser = os.Getenv("DATABASE_USER")
-	cfg.dbPass = os.Getenv("DATABASE_PASSWORD")
+	cfg.dbPass = os.Getenv("DATABASE_PASS")
 	cfg.dbHost = os.Getenv("DATABASE_HOST")
 	cfg.dbName = os.Getenv("DATABASE_NAME")
 	var err error

@@ -1,11 +1,11 @@
 package services
 
 import (
-	"authentication/models"
+	"authentication/authentication/models"
+	"authentication/authentication/repository"
+	"authentication/authentication/validators"
 	"authentication/pb"
-	"authentication/repository"
 	"authentication/security"
-	"authentication/validators"
 	"context"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

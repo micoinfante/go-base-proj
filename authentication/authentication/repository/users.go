@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"authentication/authentication/models"
 	"authentication/db"
-	"authentication/models"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"

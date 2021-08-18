@@ -1,10 +1,10 @@
 package main
 
 import (
+	"authentication/authentication/repository"
+	"authentication/authentication/services"
 	"authentication/db"
 	"authentication/pb"
-	"authentication/repository"
-	"authentication/services"
 	"flag"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
